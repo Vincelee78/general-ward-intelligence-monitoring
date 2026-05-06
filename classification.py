@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 import datetime
 
 # Streamlit dashboard
-st.set_page_config(page_title="ENCHANTED Model 1", layout="wide")
+st.set_page_config(page_title="General Ward Intelligence Monitoring", layout="wide")
 
 st.markdown(
     """
@@ -246,12 +246,12 @@ Summary of patient's clinical screening and AI risk assessment:
 Patient ID: {row["patient_id"]}
 Encounter ID: {row["encounter_id"]}
 
-Patient screening output:
-- Rule-based category: {row["rule_category"]}
-- Red flags: {row["red_flags"]}
-- Amber flags: {row["amber_flags"]}
-- Predictive risk score: {row["risk_score"]}
-- Predictive risk band: {row["risk_band"]}
+Patient risk stratification output:
+- AI risk score: {row["risk_score"]}
+- Risk stratification: {row["risk_band"]}
+- Screening flags: {row["screening_flags"]}
+- Review flags: {row["review_flags"]}
+- Advisory recommendation: {row["ai_recommendation"]}
 
 Key clinical values:
 - Age: {row["age"]}
@@ -366,41 +366,27 @@ def load_model():
 
 model = load_model()
 
-# Initialise risk outputs
-shortlisted["risk_score"] = None
-shortlisted["risk_band"] = "Not applicable"
+# Generate AI risk scores for all patients
+X = shortlisted[features]
 
-# Only apply AI model to Amber / Green patients
-eligible_mask = shortlisted["rule_category"].isin([
-    "Amber - Review Required",
-    "Green - Potential Candidate"
-])
-
-# Generate AI risk scores only for eligible patients
-if eligible_mask.any():
-    shortlisted.loc[eligible_mask, "risk_score"] = model.predict_proba(
-        shortlisted.loc[eligible_mask, features]
-    )[:, 1]
-
-    shortlisted.loc[eligible_mask, "risk_band"] = shortlisted.loc[
-        eligible_mask, "risk_score"
-    ].apply(risk_band)
+shortlisted["risk_score"] = model.predict_proba(X)[:, 1]
+shortlisted["risk_band"] = shortlisted["risk_score"].apply(risk_band)
 
 
-def ai_review_recommendation(row):
-    if row["rule_category"] == "Red - No-Go":
-        return "Not recommended based on rule-based red flag exclusion"
+# def ai_review_recommendation(row):
+#     if row["rule_category"] == "Red - No-Go":
+#         return "Not recommended based on rule-based red flag exclusion"
 
-    if row["risk_band"] == "High Risk":
-        return "Shortlisted but requires priority clinical review"
+#     if row["risk_band"] == "High Risk":
+#         return "Shortlisted but requires priority clinical review"
 
-    if row["risk_band"] == "Medium Risk":
-        return "Shortlisted for case manager review"
+#     if row["risk_band"] == "Medium Risk":
+#         return "Shortlisted for case manager review"
 
-    if row["risk_band"] == "Low Risk":
-        return "Potential CH candidate for case manager review"
+#     if row["risk_band"] == "Low Risk":
+#         return "Potential CH candidate for case manager review"
 
-    return "Pending review"
+#     return "Pending review"
 
 shortlisted["ai_recommendation"] = shortlisted.apply(
     ward_monitoring_recommendation,
@@ -468,65 +454,72 @@ green_count = (shortlisted["rule_category"] == "Green - Potential Candidate").su
 
 col1, col2, col3, col4 = st.columns(4)
 
+low_count = (shortlisted["risk_band"] == "Low Risk").sum()
+moderate_enhanced_count = (shortlisted["risk_band"] == "Moderate Risk - Enhanced Monitoring").sum()
+moderate_hdu_count = (shortlisted["risk_band"] == "Moderate Risk - High Dependency").sum()
+high_count = (shortlisted["risk_band"] == "High Risk").sum()
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
 col1.metric("Total Patients", total_patients)
-col2.metric("Red / No-Go", red_count)
-col3.metric("Amber / Review", amber_count)
-col4.metric("Green / Candidate", green_count)
+col2.metric("Low Risk", low_count)
+col3.metric("Moderate - Enhanced", moderate_enhanced_count)
+col4.metric("Moderate - HDU", moderate_hdu_count)
+col5.metric("High Risk", high_count)
 
 st.divider()
 
 # Display patient table
-st.subheader("Patient Screening Results")
+st.subheader("Patient Risk Stratification Results")
 
 def format_flags(flags):
     if isinstance(flags, list) and len(flags) > 0:
-        return ", ".join(flags)
-    return "-"
+        return flags
+    return []
+
+
+shortlisted["screening_flags"] = shortlisted["red_flags"].apply(format_flags)
+shortlisted["review_flags"] = shortlisted["amber_flags"].apply(format_flags)
 
 display_cols = [
     "patient_id",
     "encounter_id",
-    "screening_flags",
-    "review_flags",
     "risk_score",
     "risk_band",
-    "ai_recommendation",
-    # "llm_prompt"
+    "screening_flags",
+    "review_flags",
+    "ai_recommendation"
 ]
 
-# st.dataframe(shortlisted[display_cols], use_container_width=True)
 
-def colour_rule_category(value):
-    if value == "Green - Potential Candidate":
+def colour_risk_band(value):
+    if value == "Low Risk":
         return "background-color: #d4edda; color: #155724;"
-    if value == "Potential CH candidate for case manager review":
-        return "background-color: #d4edda; color: #155724;"
-    if value == "Shortlisted for case manager review":
+    elif value == "Moderate Risk - Enhanced Monitoring":
         return "background-color: #fff3cd; color: #856404;"
-    if value == "Shortlisted but requires priority clinical review":
-        return "background-color: #fff3cd; color: #856404;"
-    if value == "Not recommended based on rule-based red flag exclusion":
-        return "background-color: #f8d7da; color: #721c24;"
-    if value == "Amber - Review Required":
-        return "background-color: #fff3cd; color: #856404;"
-    if value == "Red - No-Go":
+    elif value == "Moderate Risk - High Dependency":
+        return "background-color: #ffedd5; color: #7c2d12;"
+    elif value == "High Risk":
         return "background-color: #f8d7da; color: #721c24;"
     return ""
 
+
 styled_df = shortlisted[display_cols].style.map(
-    colour_rule_category,
-    subset=["rule_category", "ai_recommendation"]
+    colour_risk_band,
+    subset=["risk_band"]
 )
 
 st.dataframe(
     styled_df,
     use_container_width=True,
     column_config={
-    "patient_id": st.column_config.TextColumn("Patient ID", width="medium"),
-    "encounter_id": st.column_config.TextColumn("Encounter ID", width="medium"),
-    "risk_score": st.column_config.NumberColumn("AI Risk Score", width="small", format="%.2f"),
-    "risk_band": st.column_config.TextColumn("Risk Stratification", width="large"),
-    "ai_recommendation": st.column_config.TextColumn("Advisory Recommendation", width="large"),
+        "patient_id": st.column_config.TextColumn("Patient ID", width="medium"),
+        "encounter_id": st.column_config.TextColumn("Encounter ID", width="medium"),
+        "risk_score": st.column_config.NumberColumn("AI Risk Score", width="small", format="%.2f"),
+        "risk_band": st.column_config.TextColumn("Risk Stratification", width="large"),
+        "screening_flags": st.column_config.ListColumn("Screening Flags", width="large"),
+        "review_flags": st.column_config.ListColumn("Review Flags", width="large"),
+        "ai_recommendation": st.column_config.TextColumn("Advisory Recommendation", width="large"),
     }
 )
 
@@ -542,17 +535,16 @@ selected_patient = st.selectbox(
 
 patient_row = shortlisted[shortlisted["patient_id"] == selected_patient].iloc[0]
 
-st.write("### Screening Output")
-st.write(f"**Rule-based category:** {patient_row['rule_category']}")
-st.write(f"**Red flags:** {patient_row['red_flags']}")
-st.write(f"**Amber flags:** {patient_row['amber_flags']}")
-# safer version
+st.write("### AI-Enabled Risk Stratification Output")
+st.write(f"**Screening flags:** {patient_row['screening_flags']}")
+st.write(f"**Review flags:** {patient_row['review_flags']}")
+
 if pd.notna(patient_row["risk_score"]):
     st.write(f"**Predictive risk score:** {patient_row['risk_score']:.2f}")
 else:
     st.write("**Predictive risk score:** Not applicable")
-st.write(f"**Predictive risk band:** {patient_row['risk_band']}")
 
+st.write(f"**Predictive risk band:** {patient_row['risk_band']}")
 st.write(f"**AI-supported recommendation:** *{patient_row['ai_recommendation']}*")
 
 st.write("### Clinician Review")
@@ -589,7 +581,7 @@ if st.button("Submit Review Decision"):
         "review_comments": review_comments
     }
 
-    review_log_path = "case_manager_review_log.csv"
+    review_log_path = "clinician_review_log.csv"
 
     try:
         existing_log = pd.read_csv(review_log_path)
@@ -602,7 +594,7 @@ if st.button("Submit Review Decision"):
 
     updated_log.to_csv(review_log_path, index=False)
 
-    st.success("Review decision submitted and saved to audit log.")
+    st.success("Clinician review decision submitted and saved to audit log.")
 
 if st.checkbox("Show submitted review log"):
     try:
