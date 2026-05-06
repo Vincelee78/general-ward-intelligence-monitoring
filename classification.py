@@ -393,8 +393,20 @@ shortlisted["ai_recommendation"] = shortlisted.apply(
     axis=1
 )
 
+# Create display flag columns before generating LLM prompt
+def format_flags(flags):
+    if isinstance(flags, list) and len(flags) > 0:
+        return flags
+    return []
+
+shortlisted["screening_flags"] = shortlisted["red_flags"].apply(format_flags)
+shortlisted["review_flags"] = shortlisted["amber_flags"].apply(format_flags)
+
 # Generate explanation / LLM prompt
-shortlisted["llm_prompt"] = shortlisted.apply(generate_llm_explanation_placeholder, axis=1)
+shortlisted["llm_prompt"] = shortlisted.apply(
+    generate_llm_explanation_placeholder,
+    axis=1
+)
 
 
 st.title("General Ward Intelligence Monitoring Dashboard")
@@ -477,9 +489,6 @@ def format_flags(flags):
         return flags
     return []
 
-
-shortlisted["screening_flags"] = shortlisted["red_flags"].apply(format_flags)
-shortlisted["review_flags"] = shortlisted["amber_flags"].apply(format_flags)
 
 display_cols = [
     "patient_id",
