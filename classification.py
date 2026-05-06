@@ -187,13 +187,31 @@ def rule_based_screening(row):
 
 
 def risk_band(prob):
-    if prob >= 0.30:
+    if prob >= 0.75:
         return "High Risk"
-    elif prob >= 0.15:
-        return "Medium Risk"
+    elif prob >= 0.50:
+        return "Moderate Risk - High Dependency"
+    elif prob >= 0.25:
+        return "Moderate Risk - Enhanced Monitoring"
     else:
         return "Low Risk"
 
+def ward_monitoring_recommendation(row):
+    risk = row["risk_band"]
+
+    if risk == "High Risk":
+        return "ICU evaluation for high-dependency or ICU care"
+
+    if risk == "Moderate Risk - High Dependency":
+        return "High-dependency care under ward team with continuous vital bedside monitoring and frequent clinical assessment"
+
+    if risk == "Moderate Risk - Enhanced Monitoring":
+        return "General ward care with continuous remote vitals monitoring and frequent clinical assessment"
+
+    if risk == "Low Risk":
+        return "General ward care with routine vitals monitoring"
+
+    return "Pending clinician review"
 
 def generate_basic_explanation(row):
     reasons = []
@@ -258,24 +276,11 @@ Key clinical values:
 
 AI-supported recommendation: {row["ai_recommendation"]}
 
-Please produce the response in this exact format:
-
-**1. Explanation of Screening Output**
-Provide a short explanation of why the patient received this screening output.
-
-**2. Key Review Points**
-List key points that the case manager or clinician should review.
-
-**3. Suggested Review Status**
-State whether the patient is:
-- Not recommended for CH referral screening at this stage based on rule-based red flag exclusion; or
-- Shortlisted for case manager review; or
-- Potential Community Hospital candidate for case manager review.
-
-Do not make a final transfer decision.
-
-**4. Clinical Decision Reminder**
-State that this is AI-supported decision support only and that the final referral / transfer decision remains with the case manager, clinician, and care team.
+Please produce:
+1. A short explanation of why the patient received this risk stratification output.
+2. Key review points for the clinician, including vital signs, oxygen requirement, laboratory trends, comorbidities, and temporal clinical progress where available.
+3. A suggested advisory monitoring category based on the risk stratification.
+4. A reminder that final monitoring, escalation, and disposition decisions remain with the clinical team.
 """
     return prompt
 
@@ -397,17 +402,20 @@ def ai_review_recommendation(row):
 
     return "Pending review"
 
-shortlisted["ai_recommendation"] = shortlisted.apply(ai_review_recommendation, axis=1)
+shortlisted["ai_recommendation"] = shortlisted.apply(
+    ward_monitoring_recommendation,
+    axis=1
+)
 
 # Generate explanation / LLM prompt
 shortlisted["llm_prompt"] = shortlisted.apply(generate_llm_explanation_placeholder, axis=1)
 
 
-st.title("ENCHANTED Model 1: CH Referral Screening Dashboard")
-st.subheader("Rule-Based Screening and AI-Supported Risk Stratification")
+st.title("General Ward Intelligence Monitoring Dashboard")
+st.subheader("AI-Enabled Patient Risk Stratification and Advisory Support")
 
 st.caption(
-    "For demonstration using sample data. Final referral and transfer decisions remain with the clinical care team."
+    "For demonstration using sample data. AI recommendations are advisory and support, but do not replace, clinician decision-making."
 )
 
 st.markdown(
@@ -422,11 +430,10 @@ st.markdown(
         margin-bottom: 20px;
     ">
         <div style="font-size: 18px; font-weight: 700; color: #0b3a66;">
-            Acute-to-Community Hospital Referral Decision Support
+            General Ward Patient Risk Stratification
         </div>
         <div style="font-size: 14px; color: #475569; margin-top: 6px;">
-            This dashboard combines rule-based clinical screening with AI-supported risk stratification to assist
-            case managers and clinicians in reviewing potential Community Hospital referral candidates.
+            This dashboard demonstrates how AI-enabled predictive modelling can support general ward monitoring by stratifying patients into risk categories based on vital signs, consciousness level, age, recent laboratory trends, comorbidities, and temporal clinical progress.
         </div>
     </div>
     """,
@@ -436,17 +443,17 @@ st.markdown(
 st.markdown(
     """
     <div style="display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap;">
-        <span style="background:#fee2e2; color:#7f1d1d; padding:8px 14px; border-radius:999px; font-weight:600;">
-            Red: Rule-Based Exclusion
+        <span style="background:#dcfce7; color:#14532d; padding:8px 14px; border-radius:999px; font-weight:600;">
+            Low Risk: Routine Vitals Monitoring
         </span>
         <span style="background:#fef3c7; color:#78350f; padding:8px 14px; border-radius:999px; font-weight:600;">
-            Amber: Clinical Review Required
+            Moderate Risk: Remote Vitals + Clinical Assessment
         </span>
-        <span style="background:#dcfce7; color:#14532d; padding:8px 14px; border-radius:999px; font-weight:600;">
-            Green: Potential Candidate
+        <span style="background:#ffedd5; color:#7c2d12; padding:8px 14px; border-radius:999px; font-weight:600;">
+            Moderate Risk: High-Dependency Ward Care
         </span>
-        <span style="background:#dbeafe; color:#1e3a8a; padding:8px 14px; border-radius:999px; font-weight:600;">
-            AI: Risk Stratification
+        <span style="background:#fee2e2; color:#7f1d1d; padding:8px 14px; border-radius:999px; font-weight:600;">
+            High Risk: ICU Evaluation
         </span>
     </div>
     """,
@@ -479,9 +486,8 @@ def format_flags(flags):
 display_cols = [
     "patient_id",
     "encounter_id",
-    "rule_category",
-    "red_flags",
-    "amber_flags",
+    "screening_flags",
+    "review_flags",
     "risk_score",
     "risk_band",
     "ai_recommendation",
@@ -516,15 +522,11 @@ st.dataframe(
     styled_df,
     use_container_width=True,
     column_config={
-        "patient_id": st.column_config.TextColumn("Patient ID", width="medium"),
-        "encounter_id": st.column_config.TextColumn("Encounter ID", width="medium"),
-        "rule_category": st.column_config.TextColumn("Rule Category", width="large"),
-        "red_flags": st.column_config.ListColumn("Red Flags", width="large"),
-        "amber_flags": st.column_config.ListColumn("Amber Flags", width="large"),
-        "risk_score": st.column_config.NumberColumn("Risk Score", width="small", format="%.2f"),
-        "risk_band": st.column_config.TextColumn("Risk Band", width="medium"),
-        "ai_recommendation": st.column_config.TextColumn("AI Recommendation", width="large"),
-        "llm_prompt": None
+    "patient_id": st.column_config.TextColumn("Patient ID", width="medium"),
+    "encounter_id": st.column_config.TextColumn("Encounter ID", width="medium"),
+    "risk_score": st.column_config.NumberColumn("AI Risk Score", width="small", format="%.2f"),
+    "risk_band": st.column_config.TextColumn("Risk Stratification", width="large"),
+    "ai_recommendation": st.column_config.TextColumn("Advisory Recommendation", width="large"),
     }
 )
 
@@ -553,23 +555,25 @@ st.write(f"**Predictive risk band:** {patient_row['risk_band']}")
 
 st.write(f"**AI-supported recommendation:** *{patient_row['ai_recommendation']}*")
 
-st.write("### Case Manager / Clinician Review")
+st.write("### Clinician Review")
 
 final_decision = st.selectbox(
-    "Final referral decision",
+    "Clinician review decision",
     [
         "Pending Review",
-        "Suitable for CH Referral",
-        "Not Suitable for CH Referral",
-        "Requires Further Clinical Clarification"
+        "Continue Routine Ward Monitoring",
+        "Escalate to Enhanced Monitoring",
+        "Consider High-Dependency Ward Care",
+        "Request ICU Evaluation",
+        "Requires Further Clinical Review"
     ]
 )
 
 review_comments = st.text_area("Review comments / override reason")
 
 st.info(
-    "The AI model provides decision support only. "
-    "Final referral decisions remain with the case manager / clinical team."
+    "The AI model provides advisory decision support only. "
+    "Final monitoring, escalation, and disposition decisions remain with the clinical team."
 )
 
 if st.button("Submit Review Decision"):
