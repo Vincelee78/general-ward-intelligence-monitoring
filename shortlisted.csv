@@ -1,0 +1,21 @@
+patient_id,encounter_id,age,sex,ward,specialty,admission_datetime,edd,los_days,days_to_edd,pregnancy_flag,copd_flag,systolic_bp,diastolic_bp,heart_rate,temperature,spo2,oxygen_device,oxygen_flow_rate,news2,hb,platelet,anc,sodium,potassium,pending_surgery_flag,active_procedure_flag,active_precaution_flag,active_iv_med_flag
+P001,E1001,68,F,Ward A,General Medicine,10/4/2026 9:15,28/4/2026,8,10,0,0,122,76,82,36.7,98,Room Air,0,0,12.8,240,3.2,138,4.1,0,0,0,0
+P014,E1014,35,F,Ward B,General Medicine,14/4/2026 10:45,30/4/2026,4,12,1,0,118,76,90,36.9,97,Room Air,0,0,12.7,250,3,138,4.2,0,0,0,0
+P005,E1005,66,F,Ward A,General Medicine,13/4/2026 10:20,29/4/2026,5,11,0,0,110,70,84,36.6,99,Room Air,0,0,13.4,300,3.7,140,4,0,0,0,0
+P019,E1019,64,M,Ward C,General Surgery,9/4/2026 7:55,22/4/2026,9,4,0,0,128,74,86,36.8,97,Room Air,0,0,12,210,2.9,136,4,1,1,0,0
+P007,E1007,63,F,Ward C,General Medicine,11/4/2026 13:40,24/4/2026,7,6,0,0,98,64,96,37.4,95,Nasal Cannula,1,2,11,170,2.1,134,3.7,0,0,0,0
+P010,E1010,58,M,Ward B,General Medicine,10/4/2026 12:00,22/4/2026,8,4,0,0,104,68,99,37.1,95,Room Air,0,1,10.8,165,1.9,132,3.5,0,0,1,0
+P002,E1002,74,M,Ward B,General Medicine,12/4/2026 14:30,26/4/2026,6,8,0,1,128,78,88,36.8,93,Room Air,0,0,13.1,210,2.8,136,4.3,0,0,0,0
+P012,E1012,61,M,Ward D,General Medicine,12/4/2026 18:20,27/4/2026,6,9,0,0,138,86,101,37.5,95,Nasal Cannula,2,3,10.5,150,2.2,134,3.6,0,0,0,1
+P011,E1011,83,F,Ward C,Geriatrics,5/4/2026 15:15,24/4/2026,13,6,0,1,126,80,94,37.3,90,Nasal Cannula,1,2,10.2,145,1.8,131,3.4,0,0,0,0
+P013,E1013,69,F,Ward A,Respiratory Medicine,9/4/2026 9:05,21/4/2026,9,3,0,1,88,58,124,38.2,86,Non-Rebreather Mask,6,7,8.2,90,0.8,126,5.8,0,1,1,1
+P006,E1006,72,M,Ward B,Respiratory Medicine,8/4/2026 16:10,27/4/2026,10,9,0,1,124,74,86,36.7,94,Room Air,0,0,12.1,220,3,137,4.2,0,0,0,0
+P015,E1015,76,M,Ward C,Cardiology,6/4/2026 11:25,24/4/2026,12,6,0,0,184,112,118,37.8,92,Nasal Cannula,3,5,9,120,1,129,5.6,0,1,0,1
+P008,E1008,77,M,Ward D,General Medicine,6/4/2026 9:50,23/4/2026,12,5,0,0,142,88,105,37.6,94,Nasal Cannula,1,2,10.6,155,2,133,3.6,0,0,0,0
+P009,E1009,70,F,Ward A,Cardiology,14/4/2026 7:30,26/4/2026,4,8,0,0,132,82,108,37.2,96,Room Air,0,1,11.2,190,2.4,136,4.8,0,1,0,0
+P016,E1016,82,F,Ward D,Orthopaedics,8/4/2026 8:10,23/4/2026,10,5,0,0,116,70,88,36.6,98,Room Air,0,0,11.5,230,3.6,137,4.1,1,0,0,0
+P017,E1017,57,M,Ward A,General Medicine,11/4/2026 14:05,25/4/2026,7,7,0,0,92,60,121,38.1,90,Venturi Mask,4,6,7.8,85,0.7,124,2.8,0,0,1,1
+P004,E1004,81,M,Ward D,Geriatrics,7/4/2026 8:45,25/4/2026,11,7,0,0,136,84,92,36.9,96,Room Air,0,0,12.5,180,2.5,135,4.6,0,0,0,0
+P018,E1018,73,F,Ward B,Respiratory Medicine,7/4/2026 17:40,26/4/2026,11,8,0,1,106,66,102,37,87,Nasal Cannula,3,5,10,130,1.5,130,5.2,0,0,0,0
+P003,E1003,59,F,Ward C,Orthopaedics,9/4/2026 11:00,30/4/2026,9,12,0,0,118,72,76,36.5,97,Room Air,0,0,11.9,260,4.1,139,3.9,0,0,0,0
+P020,E1020,79,F,Ward D,Geriatrics,13/4/2026 16:35,28/4/2026,5,10,0,0,150,92,116,37.9,93,Nasal Cannula,2,4,9.5,110,1.2,128,5.4,0,0,1,1
